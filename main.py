@@ -11,7 +11,8 @@ import torchvision.datasets as dset
 import torchvision.transforms as transforms
 from utils import AverageMeter, RecorderMeter, time_string, convert_secs2time
 import models
-from tensorboardX import SummaryWriter
+
+#from tensorflow import SummaryWriter
 
 model_names = sorted(name for name in models.__dict__
   if name.islower() and not name.startswith("__")
@@ -91,7 +92,7 @@ def main():
 
 
 
-  writer = SummaryWriter()
+  #writer = SummaryWriter()
 
 
   #   # Data transforms
@@ -231,7 +232,7 @@ def main():
     start_time = time.time()
     recorder.plot_curve( os.path.join(args.save_path, 'training_plot_{0}_{1}.png'.format(args.manualSeed, time_stamp)) )
 
-  writer.close()
+  #writer.close()
   log.close()
 
 # train function (forward, backward, update)
@@ -250,7 +251,7 @@ def train(train_loader, model, criterion, optimizer, epoch, log):
     data_time.update(time.time() - end)
 
     if args.use_cuda:
-      target = target.cuda(async=True)
+      target = target.cuda(non_blocking=True)
       input = input.cuda()
     input_var = torch.autograd.Variable(input)
     target_var = torch.autograd.Variable(target)
@@ -261,9 +262,9 @@ def train(train_loader, model, criterion, optimizer, epoch, log):
 
     # measure accuracy and record loss
     prec1, prec5 = accuracy(output.data, target, topk=(1, 5))
-    losses.update(loss.data[0], input.size(0))
-    top1.update(prec1[0], input.size(0))
-    top5.update(prec5[0], input.size(0))
+    losses.update(loss.item(), input.size(0))
+    top1.update(prec1.item(), input.size(0))
+    top5.update(prec5.item(), input.size(0))
 
     # compute gradient and do SGD step
     optimizer.zero_grad()
@@ -296,7 +297,7 @@ def validate(val_loader, model, criterion, log):
 
   for i, (input, target) in enumerate(val_loader):
     if args.use_cuda:
-      target = target.cuda(async=True)
+      target = target.cuda(non_blocking=True)
       input = input.cuda()
     input_var = torch.autograd.Variable(input, volatile=True)
     target_var = torch.autograd.Variable(target, volatile=True)
@@ -307,9 +308,9 @@ def validate(val_loader, model, criterion, log):
 
     # measure accuracy and record loss
     prec1, prec5 = accuracy(output.data, target, topk=(1, 5))
-    losses.update(loss.data[0], input.size(0))
-    top1.update(prec1[0], input.size(0))
-    top5.update(prec5[0], input.size(0))
+    losses.update(loss.data.item(), input.size(0))
+    top1.update(prec1.item(), input.size(0))
+    top5.update(prec5.item(), input.size(0))
 
   print_log('  **Test** Prec@1 {top1.avg:.3f} Prec@5 {top5.avg:.3f} Error@1 {error1:.3f}'.format(top1=top1, top5=top5, error1=100-top1.avg), log)
 
@@ -325,7 +326,7 @@ def extract_features(val_loader, model, criterion, log):
 
   for i, (input, target) in enumerate(val_loader):
     if args.use_cuda:
-      target = target.cuda(async=True)
+      target = target.cuda(non_blocking=True)
       input = input.cuda()
     input_var = torch.autograd.Variable(input, volatile=True)
     target_var = torch.autograd.Variable(target, volatile=True)
@@ -339,9 +340,9 @@ def extract_features(val_loader, model, criterion, log):
 
     # measure accuracy and record loss
     prec1, prec5 = accuracy(output.data, target, topk=(1, 5))
-    losses.update(loss.data[0], input.size(0))
-    top1.update(prec1[0], input.size(0))
-    top5.update(prec5[0], input.size(0))
+    losses.update(loss.data.item(), input.size(0))
+    top1.update(prec1.item(), input.size(0))
+    top5.update(prec5.item(), input.size(0))
 
   print_log('  **Test** Prec@1 {top1.avg:.3f} Prec@5 {top5.avg:.3f} Error@1 {error1:.3f}'.format(top1=top1, top5=top5, error1=100-top1.avg), log)
 
